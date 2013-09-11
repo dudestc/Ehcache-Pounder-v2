@@ -1,0 +1,11 @@
+threadCount: 5
+entryCount: 50000
+batchCount: 5000
+maxValueSize: 400
+minValueSize: 200
+hotSetPercentage: 99
+rounds: 15
+updatePercentage: 5
+searchPercentage: 2
+ehcacheFileURL: ehcache.xml
+ehcacheFileCacheName: myTestCache
