@@ -12,9 +12,12 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.CacheOperationOutcomes;
+import net.sf.ehcache.CacheOperationOutcomes.SearchOutcome;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.search.Attribute;
+import net.sf.ehcache.statistics.extended.ExtendedStatistics.Operation;
 
 import org.ho.yaml.Yaml;
 
@@ -27,6 +30,7 @@ public class EhcachePounderV2 {
 	private final int hotSetPercentage;
 	private final int rounds;
 	private final int updatePercentage;
+	private final int readPercentage;
 	private final int searchPercentage;
 	private static final Random random = new Random();
 
@@ -47,7 +51,7 @@ public class EhcachePounderV2 {
 			long entryCount, int batchCount, int maxValueSize, int minValueSize,
 			int hotSetPercentage, int rounds, int updatePercentage, 
 			String ehcacheFileURL, String ehcacheFileCacheName,
-			int searchPercentage
+			int searchPercentage, int readPercentage
 			) throws InterruptedException, IOException {
 		
 		this.entryCount = entryCount;
@@ -59,6 +63,7 @@ public class EhcachePounderV2 {
 		this.rounds = rounds;
 		this.updatePercentage = updatePercentage;
 		this.searchPercentage = searchPercentage;
+		this.readPercentage = readPercentage;
 				
 		// If a ehcache file was provided, create the cache using the parameters from the file. 
 		// If not, create your own cache ...
@@ -98,10 +103,8 @@ public class EhcachePounderV2 {
 
 	private void outputRoundData(int round, int cacheSize,
 			final long totalTime, final int tps) {
-		System.out.println(System.currentTimeMillis() + " ROUND " + round
-				+ " size: " + cacheSize);
-		System.out.println(System.currentTimeMillis() + " Took: " + totalTime
-				+ " final size was " + cacheSize + " TPS: " + tps);
+		System.out.println(" ROUND " + round + " - Cache Size: " + cacheSize);
+		System.out.println(" Took: " + totalTime + " msecs - Avg TPS: " + tps);
 		// csvOut.println(round + "," + cacheSize + ',' + totalTime + ',' +
 		// tps);
 		// csvOut.flush();
@@ -142,6 +145,7 @@ public class EhcachePounderV2 {
 		int readCount = 0;
 		int writeCount = 0;
 		int searchCount = 0;
+		int searchTime = 0;
 		long t = System.currentTimeMillis();
 		int currentSize = 1;
 		List<String> ids = getListOfIDs();
@@ -158,10 +162,16 @@ public class EhcachePounderV2 {
 							.set(batchTimeMillis > maxBatchTimeMillis.get() ? batchTimeMillis
 									: maxBatchTimeMillis.get());
 				}
+				// Check how many objects are in the cache
 				currentSize = cache.getSize();
+				
+				// If the search count is 0 - do not divide :)
+				if (searchCount != 0) {
+					searchTime = searchTime / searchCount;
+				}
 
 				outputBatchData(round, System.currentTimeMillis(), warmup,
-						so.getContent().length, readCount, writeCount, searchCount, currentSize,
+						so.getContent().length, readCount, writeCount, searchCount, searchTime, currentSize,
 						batchTimeMillis);
 				t = System.currentTimeMillis();
 				readCount = 0;
@@ -170,19 +180,27 @@ public class EhcachePounderV2 {
 
 			}
 			
+			// If Warmup has finished and search operation is happening...
 			if (!warmup && isSearch()) {
-				Attribute<String> ID = cache.getSearchAttribute("ID");
+				Attribute<String> Name = cache.getSearchAttribute("Name");
+				long searchStart = System.currentTimeMillis();
 				
-				net.sf.ehcache.search.Results results = cache.createQuery().includeKeys().addCriteria(ID.eq(getRandomID(null))).execute();
+				net.sf.ehcache.search.Results results = cache.createQuery().includeKeys().addCriteria(Name.eq("Homer")).execute();
+				
+				// System.out.println("Search took " +  (System.currentTimeMillis() - searchStart) + " msecs");
+				searchTime = searchTime + (int) (System.currentTimeMillis() - searchStart);
 				searchCount++;
 			}
 			
+			// If cache warms up or if a write is happening
 			if (warmup || isWrite()) {
 				so = new SampleObject(minValueSize, maxValueSize);
 				cache.put(new Element(so.getID(), so));
 				writeCount++;
 			}
-			if (!isWrite() && !warmup) {
+			
+			// If warmup has finished and read operation is happening
+			if (isRead() && !warmup) {
 				long getTime = 0;
 				if (readCount % threadCount == 0) {
 					getTime = System.currentTimeMillis();
@@ -206,6 +224,8 @@ public class EhcachePounderV2 {
 		return cache.getKeys();
 	}
 	
+	
+	// New method to generate a random ID
 	private String getRandomID(List<String> ids) {
 		
 		if (ids == null) {
@@ -228,17 +248,19 @@ public class EhcachePounderV2 {
 	
 
 	private void outputBatchData(int round, long timeMillis,
-			final boolean warmup, int entrySize, int readCount, int writeCount, int searchCount,
+			final boolean warmup, int entrySize, int readCount, int writeCount, int searchCount, int searchTime,
 			int currentSize, long batchTimeMillis) {
-		System.out.println("*** " + timeMillis  
+		System.out.println("*** " 
 				+ " Cache size: " + (currentSize)
-				+ " - Batch time: " + batchTimeMillis
-				+ "; Object size:" + entrySize 
-				+ "; READ Count: " + readCount
-				+ " - WRITE Count: " + writeCount 
-				+ " - SEARCH Count: " + searchCount
+				+ " - Batch took: " + batchTimeMillis + " msecs"
+				+ "; avg object size:" + entrySize 
+				+ "; READ Operations: " + readCount
+				+ " - WRITE Operations: " + writeCount 
+				+ " - SEARCH Operations: " + searchCount
+				+ " - Avg Search: " + searchTime + " msecs"
 				+ " ***"
 				);
+		
 		csvOut.println(round + "," + timeMillis + "," + currentSize + ","
 				+ batchTimeMillis + "," + warmup + "," + entrySize + ","
 				+ readCount + "," + writeCount + "," + hotSetPercentage);
@@ -246,6 +268,11 @@ public class EhcachePounderV2 {
 
 	}
 
+	private boolean isRead() {
+
+		return random.nextInt(100) < readPercentage;
+	}
+	
 	private boolean isWrite() {
 
 		return random.nextInt(100) < updatePercentage;
@@ -329,11 +356,12 @@ public class EhcachePounderV2 {
 		int rounds = (Integer) config.get("rounds");
 		int updatePercentage = (Integer) config.get("updatePercentage");
 		int searchPercentage = (Integer) config.get("searchPercentage");
+		int readPercentage = (Integer) config.get("readPercentage");
 		String ehcacheFileURL = (String) config.get("ehcacheFileURL");
 		String ehcacheFileCacheName = (String) config.get("ehcacheFileCacheName");
 		
 		new EhcachePounderV2(threadCount, entryCount, batchCount, maxValueSize, minValueSize,
-				hotSetPercentage, rounds, updatePercentage, ehcacheFileURL, ehcacheFileCacheName, searchPercentage)
+				hotSetPercentage, rounds, updatePercentage, ehcacheFileURL, ehcacheFileCacheName, searchPercentage, readPercentage)
 				.start();
 	}
 

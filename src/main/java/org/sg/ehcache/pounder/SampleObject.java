@@ -85,9 +85,9 @@ public class SampleObject implements Serializable {
 		names.add("Armin");
 		names.add("Cindy");
 		names.add("Abdul");
-		names.add("Terra");
+		names.add("Bart");
 		names.add("Cyrus");
-		names.add("Gagan");
+		names.add("Homer");
 		names.add("Joe");
 
 		Random rand = new Random();
@@ -107,7 +107,7 @@ public class SampleObject implements Serializable {
 		Random r = new Random();
 		int size = r.nextInt(max - min + 10) + max;
 		byte[] bytes = new byte[size];
-		for (int i = 0; i < bytes.length; i++) {
+/*		for (int i = 0; i < bytes.length; i++) {
 			if (i < 5) {
 				bytes[i] = (byte) i;
 			} else if ((bytes.length - i) < 5) {
@@ -115,7 +115,7 @@ public class SampleObject implements Serializable {
 			} else {
 				bytes[i] = (byte) r.nextInt(128);
 			}
-		}
+		}*/
 		return bytes;
 	}
 	

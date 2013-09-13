@@ -26,7 +26,7 @@
 				<include>*.yml</include>
 				<include>ehcache.xml</include>
 				<include>*.sh</include>
-				<include>*.key</include>				
+				<!--  <include>*.key</include> -->				
 				<include>README</include>
 			</includes>
 			<filtered>true</filtered>
