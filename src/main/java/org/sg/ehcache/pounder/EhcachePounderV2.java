@@ -10,15 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
-
 import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.CacheOperationOutcomes;
-import net.sf.ehcache.CacheOperationOutcomes.SearchOutcome;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.search.Attribute;
-import net.sf.ehcache.statistics.extended.ExtendedStatistics.Operation;
-
 import org.ho.yaml.Yaml;
 
 
@@ -146,6 +141,9 @@ public class EhcachePounderV2 {
 		int writeCount = 0;
 		int searchCount = 0;
 		int searchTime = 0;
+		int writeTime = 0;
+		int readTime = 0;
+		
 		long t = System.currentTimeMillis();
 		int currentSize = 1;
 		List<String> ids = getListOfIDs();
@@ -169,9 +167,17 @@ public class EhcachePounderV2 {
 				if (searchCount != 0) {
 					searchTime = searchTime / searchCount;
 				}
+				
+				if (readCount != 0) {
+					readTime = readTime / readCount;
+				}
+				
+				if (writeCount != 0) {
+					writeTime = writeTime / writeCount;
+				}
 
 				outputBatchData(round, System.currentTimeMillis(), warmup,
-						so.getContent().length, readCount, writeCount, searchCount, searchTime, currentSize,
+						so.getContent().length, readCount, writeCount, searchCount, searchTime, readTime, writeTime, currentSize,
 						batchTimeMillis);
 				t = System.currentTimeMillis();
 				readCount = 0;
@@ -194,8 +200,10 @@ public class EhcachePounderV2 {
 			
 			// If cache warms up or if a write is happening
 			if (warmup || isWrite()) {
+				long writeStart = System.currentTimeMillis();
 				so = new SampleObject(minValueSize, maxValueSize);
 				cache.put(new Element(so.getID(), so));
+				writeTime = writeTime + (int) (System.currentTimeMillis() - writeStart);
 				writeCount++;
 			}
 			
@@ -205,7 +213,11 @@ public class EhcachePounderV2 {
 				if (readCount % threadCount == 0) {
 					getTime = System.currentTimeMillis();
 				}
+				
+				long readStart = System.currentTimeMillis();
 				readEntry(getRandomID(ids));
+				readTime = readTime + (int) (System.currentTimeMillis() - readStart);
+				
 				if (getTime > 0) {
 					long ct = System.currentTimeMillis() - getTime;
 					if (maxGetTime.get() < ct) {
@@ -248,16 +260,14 @@ public class EhcachePounderV2 {
 	
 
 	private void outputBatchData(int round, long timeMillis,
-			final boolean warmup, int entrySize, int readCount, int writeCount, int searchCount, int searchTime,
+			final boolean warmup, int entrySize, int readCount, int writeCount, int searchCount, int searchTime, int readTime, int writeTime,
 			int currentSize, long batchTimeMillis) {
 		System.out.println("*** " 
-				+ " Cache size: " + (currentSize)
-				+ " - Batch took: " + batchTimeMillis + " msecs"
-				+ "; avg object size:" + entrySize 
-				+ "; READ Operations: " + readCount
-				+ " - WRITE Operations: " + writeCount 
-				+ " - SEARCH Operations: " + searchCount
-				+ " - Avg Search: " + searchTime + " msecs"
+				+ "Batch took: " + batchTimeMillis + " msecs"
+				+ "; Avg Object Size: " + entrySize + " bytes"
+				+ "; READ: " + readCount + " (Avg: " + readTime + " msecs)"
+				+ " - WRITE: " + writeCount + " (Avg: " + writeTime + " msecs)"
+				+ " - SEARCH: " + searchCount + " (Avg: " + searchTime + " msecs)"
 				+ " ***"
 				);
 		
@@ -267,22 +277,23 @@ public class EhcachePounderV2 {
 		csvOut.flush();
 
 	}
-
+	
+	
 	private boolean isRead() {
-
 		return random.nextInt(100) < readPercentage;
 	}
 	
+	
 	private boolean isWrite() {
-
 		return random.nextInt(100) < updatePercentage;
 	}
 	
+	
 	private boolean isSearch() {
-
 		return random.nextInt(100) < searchPercentage;
 	}
 
+	
 	private void readEntry(Object key) {
 
 		Element e = cache.get(key);

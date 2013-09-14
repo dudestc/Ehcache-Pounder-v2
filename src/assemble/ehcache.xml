@@ -35,6 +35,9 @@
 	      <searchAttribute name="Name"/>
 	      <searchAttribute name="Number"/>
   	  	</searchable>
+  	  	
+        <!-- <bootstrapCacheLoaderFactory class="org.sg.ehcache.bootstrapper.BootstrapFactory" properties="bootstrapAsynchronously=true,Threads=5,SleepMsec=10"/> -->
+        
     </cache>  
     <terracottaConfig         
         url="localhost:9510"         

@@ -63,21 +63,26 @@
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
- <dependency>
-   <groupId>org.terracotta</groupId>
-   <artifactId>terracotta-toolkit-runtime-ee</artifactId>
-   <version>4.0.1</version>
- </dependency>
+ 		<dependency>
+   			<groupId>org.terracotta</groupId>
+   			<artifactId>terracotta-toolkit-runtime-ee</artifactId>
+   			<version>4.0.1</version>
+ 		</dependency>
 
    <!-- The following dependencies are required for using Ehcache. 
         Dependencies not listed here include the SLF4J API JAR (version 1.6.1) and an SLF4J
     binding JAR of your choice. These JARs specify the required logging framework. 
     It also does not include the explicit-locking JAR.-->
- <dependency>
-   <groupId>net.sf.ehcache</groupId>
-   <artifactId>ehcache-ee</artifactId>
-   <version>2.7.1</version>
- </dependency>		
+ 		<dependency>
+   			<groupId>net.sf.ehcache</groupId>
+   			<artifactId>ehcache-ee</artifactId>
+   			<version>2.7.1</version>
+ 		</dependency>	
+ 		<dependency>
+   			<groupId>org.sg.ehcache</groupId>
+   			<artifactId>ehcache-bootstrapper</artifactId>
+   			<version>0.1</version>
+ 		</dependency> 			
 	</dependencies>
 	
 <repositories>

@@ -14,7 +14,7 @@ public class SampleObject implements Serializable {
 		this.setName(getRandomName());
 		this.setNumber((int) getRandomNumber());
 		this.setContent(buildValue(min, max));
-	}
+	} 
 	
 	
 	/**
@@ -105,17 +105,13 @@ public class SampleObject implements Serializable {
 	 */
 	private byte[] buildValue(int min, int max) {
 		Random r = new Random();
-		int size = r.nextInt(max - min + 10) + max;
+
+		int size = 0;
+		while (size < min) {
+			size = r.nextInt(max);
+		}
 		byte[] bytes = new byte[size];
-/*		for (int i = 0; i < bytes.length; i++) {
-			if (i < 5) {
-				bytes[i] = (byte) i;
-			} else if ((bytes.length - i) < 5) {
-				bytes[i] = (byte) (bytes.length - i);
-			} else {
-				bytes[i] = (byte) r.nextInt(128);
-			}
-		}*/
+
 		return bytes;
 	}
 	

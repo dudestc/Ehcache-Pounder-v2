@@ -26,7 +26,7 @@
 				<include>*.yml</include>
 				<include>ehcache.xml</include>
 				<include>*.sh</include>
-				<!--  <include>*.key</include> -->				
+<!-- 				<include>*.key</include>				 -->
 				<include>README</include>
 			</includes>
 			<filtered>true</filtered>
@@ -41,7 +41,7 @@
 			<excludes>
 				<exclude>net.sf.ehcache:ehcache-ee</exclude>
 				<exclude>org.terracotta:terracotta-toolkit-runtime-ee</exclude>
-			</excludes>
+			</excludes> 
 		</dependencySet>
 		<dependencySet>
 			<outputDirectory>/</outputDirectory>
