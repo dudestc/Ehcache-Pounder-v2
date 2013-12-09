@@ -4,3 +4,6 @@ Version: 0.2
 
 LOG:
 0.2 - Release first preview beta version. This version is now including the search API with a much simpler user experience. 
+0.4 - Several small bugfixes... Also tested with Bootstraploader.
+
+

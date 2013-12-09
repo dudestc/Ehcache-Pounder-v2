@@ -38,10 +38,10 @@
 			<outputDirectory>/libs</outputDirectory>
 			<unpack>false</unpack>
 			<scope>runtime</scope>
-			<excludes>
+			<!-- <excludes>
 				<exclude>net.sf.ehcache:ehcache-ee</exclude>
 				<exclude>org.terracotta:terracotta-toolkit-runtime-ee</exclude>
-			</excludes> 
+			</excludes> -->
 		</dependencySet>
 		<dependencySet>
 			<outputDirectory>/</outputDirectory>
